@@ -33,7 +33,7 @@ const Auth = () => {
         const { token, email: userEmail } = await api.login(email, password);
         console.log("Login successful:", { token, userEmail });
         localStorage.setItem("token", token);
-        localStorage.setItem("userEmail", userEmail);
+        localStorage.setItem("userEmail", email);
         navigate("/home");
       } else {
         await api.register(email, password);
