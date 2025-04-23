@@ -22,10 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-
 model
 set
 api
 temp.html
 temp2.html
+
+.env
+.env.*
+.env.local
