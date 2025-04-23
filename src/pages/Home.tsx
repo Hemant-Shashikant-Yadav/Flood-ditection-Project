@@ -1,57 +1,77 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Droplets, AlertTriangle } from 'lucide-react';
-import EmergencyMap from '../components/EmergencyMap';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Droplets, AlertTriangle, MapPin } from "lucide-react";
+import EmergencyMap from "../components/EmergencyMap";
 
 const Home = () => {
   const [formData, setFormData] = useState({
-    rainfall_mm: '',
-    temp_max: '',
-    temp_min: '',
-    cumulative_3day_rain: '',
-    cumulative_7day_rain: '',
-    soil_moisture: '',
-    river_level: ''
+    latitude: "",
+    longitude: "",
+    rainfall: "",
+    temperature: "",
+    humidity: "",
+    riverDischarge: "",
+    waterLevel: "",
+    elevation: "",
   });
   const [prediction, setPrediction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData((prev) => ({
+            ...prev,
+            latitude: position.coords.latitude.toFixed(6),
+            longitude: position.coords.longitude.toFixed(6),
+          }));
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate prediction (replace with actual API call)
+
     setTimeout(() => {
-      const randomPrediction = Math.random() > 0.5;
-      setPrediction(randomPrediction ? 'High risk of flooding!' : 'Low risk of flooding');
-      setShowMap(randomPrediction);
+      setPrediction("High risk of flooding!");
+      setShowMap(true);
       setLoading(false);
     }, 1500);
   };
 
+  const triggerFloodCondition = () => {
+    setPrediction("Emergency: Critical flood conditions detected!");
+    setShowMap(true);
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-100">
-      {/* Background */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-cover bg-center opacity-30"
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
         transition={{ duration: 3 }}
         style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1446776877081-d282a0f896e2?auto=format&fit=crop&q=80")',
-          filter: 'blur(5px)'
+          backgroundImage:
+            'url("https://images.pexels.com/photos/1433052/pexels-photo-1433052.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2")',
+          filter: "blur(5px)",
         }}
       />
-      
-      {/* Content */}
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="flex justify-center mb-8">
           <motion.div
@@ -60,7 +80,9 @@ const Home = () => {
             animate={{ y: 0, opacity: 1 }}
           >
             <Droplets className="w-12 h-12 text-blue-600" />
-            <h1 className="text-4xl font-bold text-blue-900">FloodGuard Prediction</h1>
+            <h1 className="text-4xl font-bold text-blue-900">
+              FloodGuard Monitoring
+            </h1>
           </motion.div>
         </div>
 
@@ -73,16 +95,53 @@ const Home = () => {
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(formData).map(([key, value]) => (
-                  <div key={key}>
+                <div className="col-span-2 flex gap-4">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      Latitude{" "}
+                      <MapPin className="inline-block w-4 h-4 text-blue-500" />
+                    </label>
+                    <input
+                      type="text"
+                      name="latitude"
+                      value={formData.latitude}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed"
+                      disabled
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Longitude{" "}
+                      <MapPin className="inline-block w-4 h-4 text-blue-500" />
+                    </label>
+                    <input
+                      type="text"
+                      name="longitude"
+                      value={formData.longitude}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-gray-100 cursor-not-allowed"
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                {[
+                  "rainfall",
+                  "temperature",
+                  "humidity",
+                  "riverDischarge",
+                  "waterLevel",
+                  "elevation",
+                ].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {field.charAt(0).toUpperCase() +
+                        field.slice(1).replace(/([A-Z])/g, " $1")}
                     </label>
                     <input
                       type="number"
                       step="0.01"
-                      name={key}
-                      value={value}
+                      name={field}
+                      value={formData[field as keyof typeof formData]}
                       onChange={handleChange}
                       className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
@@ -91,34 +150,48 @@ const Home = () => {
                 ))}
               </div>
 
-              <motion.button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="inline-block"
-                  >
-                    <Droplets className="w-5 h-5" />
-                  </motion.div>
-                ) : 'Predict'}
-              </motion.button>
+              <div className="flex gap-4">
+                <motion.button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="inline-block"
+                    >
+                      <Droplets className="w-5 h-5" />
+                    </motion.div>
+                  ) : (
+                    "Monitor Conditions"
+                  )}
+                </motion.button>
+
+                <motion.button
+                  type="button"
+                  onClick={triggerFloodCondition}
+                  className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Trigger Flood Alert
+                </motion.button>
+              </div>
             </form>
 
             {prediction && !showMap && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`mt-6 p-4 rounded-lg flex items-center gap-3 ${
-                  prediction.includes('High') 
-                    ? 'bg-red-100 text-red-800' 
-                    : 'bg-green-100 text-green-800'
-                }`}
+                className="mt-6 p-4 rounded-lg flex items-center gap-3 bg-red-100 text-red-800"
               >
                 <AlertTriangle className="w-5 h-5" />
                 <span className="font-medium">{prediction}</span>
@@ -136,7 +209,6 @@ const Home = () => {
         )}
       </div>
 
-      {/* Back Button */}
       <motion.button
         onClick={() => {
           setShowMap(false);
@@ -146,7 +218,7 @@ const Home = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        Back to Prediction
+        Back to Monitoring
       </motion.button>
     </div>
   );
