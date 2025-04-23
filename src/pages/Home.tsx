@@ -176,7 +176,7 @@ const Home = () => {
           >
             <Droplets className="w-12 h-12 text-blue-600" />
             <h1 className="text-4xl font-bold text-blue-900">
-              HydroShielduard Monitoring
+              HydroShield Monitoring
             </h1>
           </motion.div>
         </div>

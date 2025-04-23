@@ -58,7 +58,7 @@ const Welcome = () => {
             transition={{ delay: 0.8 }}
             className="text-6xl font-bold mb-6 text-white text-shadow-lg"
           >
-            HydroShielduard
+            HydroShield
           </motion.h1>
 
           <motion.div
