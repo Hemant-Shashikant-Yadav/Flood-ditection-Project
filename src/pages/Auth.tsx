@@ -148,7 +148,9 @@ const Auth = () => {
                 }}
               />
             </motion.div>
-            <h2 className="text-4xl font-bold text-white mb-2">FloodGuard</h2>
+            <h2 className="text-4xl font-bold text-white mb-2">
+              HydroShielduard
+            </h2>
             <p className="text-blue-200">
               {isLogin ? "Welcome back!" : "Create your account"}
             </p>
