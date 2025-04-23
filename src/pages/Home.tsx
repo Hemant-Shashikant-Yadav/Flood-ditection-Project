@@ -112,8 +112,23 @@ const Home = () => {
           body: JSON.stringify({
             email: userEmail,
             subject: "Flood Alert Notification",
-            message:
-              "A flood condition has been detected in your area. Please take necessary precautions.",
+            message: `
+            Emergency Alert: A flood condition has been detected in your area. Please take immediate precautions to ensure your safety.
+
+            General Safety Tips:
+            - Move to higher ground immediately.
+            - Avoid walking or driving through floodwaters.
+            - Keep emergency supplies, including food, water, and medications, ready.
+
+            Emergency Contacts:
+            - National Disaster Management: 011-26701700, Help Line Number : 011-1078
+            - Police: 100
+            - Fire Department: 101
+            - Ambulance: 102
+            - Emergency: 112
+
+            Stay safe and follow updates from local authorities.
+          `,
           }),
         }
       );
