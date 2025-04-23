@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Droplets, AlertTriangle, MapPin } from "lucide-react";
+import { Droplets, AlertTriangle, MapPin, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import EmergencyMap from "../components/EmergencyMap";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     latitude: "",
     longitude: "",
@@ -18,15 +20,23 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
+  const OPEN_WEATHER_API_KEY = import.meta.env.VITE_OPEN_WEATHER_API_KEY;
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const latitude = position.coords.latitude.toFixed(6);
+          const longitude = position.coords.longitude.toFixed(6);
+
           setFormData((prev) => ({
             ...prev,
-            latitude: position.coords.latitude.toFixed(6),
-            longitude: position.coords.longitude.toFixed(6),
+            latitude,
+            longitude,
           }));
+
+          // Fetch weather data
+          fetchWeatherData(latitude, longitude);
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -34,6 +44,33 @@ const Home = () => {
       );
     }
   }, []);
+
+  const fetchWeatherData = async (latitude: string, longitude: string) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${OPEN_WEATHER_API_KEY}`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormData((prev) => ({
+          ...prev,
+          temperature: data.main.temp.toFixed(1),
+          humidity: data.main.humidity.toString(),
+          rainfall: data.rain ? data.rain["1h"] || "0" : "0",
+        }));
+      } else {
+        console.error("Error fetching weather data:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Clear the token
+    navigate("/auth"); // Redirect to the login page
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -53,9 +90,42 @@ const Home = () => {
     }, 1500);
   };
 
-  const triggerFloodCondition = () => {
+  const triggerFloodCondition = async () => {
     setPrediction("Emergency: Critical flood conditions detected!");
     setShowMap(true);
+
+    // Send email notification
+    try {
+      const userEmail = localStorage.getItem("userEmail"); // Assuming the user's email is stored in localStorage
+      if (!userEmail) {
+        console.error("User email not found");
+        return;
+      }
+
+      const response = await fetch(
+        "https://server-nu-indol.vercel.app/api/email/send-email",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            subject: "Flood Alert Notification",
+            message:
+              "A flood condition has been detected in your area. Please take necessary precautions.",
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log("Flood notification email sent successfully!");
+      } else {
+        console.error("Failed to send flood notification email");
+      }
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+    }
   };
 
   return (
@@ -72,6 +142,16 @@ const Home = () => {
         }}
       />
 
+      {/* Logout Button */}
+      <motion.button
+        onClick={handleLogout}
+        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <LogOut className="w-5 h-5" />
+        Logout
+      </motion.button>
       <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="flex justify-center mb-8">
           <motion.div

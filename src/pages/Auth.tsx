@@ -1,70 +1,83 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, LogIn, UserPlus, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Droplets,
+  LogIn,
+  UserPlus,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(""); // State for success message
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { token } = await api.login(email, password);
-        localStorage.setItem('token', token);
-        navigate('/dashboard');
+        const { token, email } = await api.login(email, password);
+        localStorage.setItem("token", token);
+        localStorage.setItem("userEmail", email); // Store user email
+        navigate("/home");
       } else {
         await api.register(email, password);
         setIsLogin(true);
-        setError('Registration successful! Please login.');
+        setSuccess("Registration successful! Please login.");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError(err.response?.data?.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   const goToHome = () => {
-    navigate('/home');
+    navigate("/home");
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background layers */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-cover bg-center z-0"
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
         transition={{ duration: 3 }}
         style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1446776877081-d282a0f896e2?auto=format&fit=crop&q=80")'
+          backgroundImage:
+            'url("https://images.unsplash.com/photo-1446776877081-d282a0f896e2?auto=format&fit=crop&q=80")',
         }}
       />
-      
+
       {/* Animated water overlay */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-cover bg-center z-1 opacity-30"
-        animate={{ 
+        animate={{
           y: [0, -20, 0],
-          opacity: [0.3, 0.4, 0.3]
+          opacity: [0.3, 0.4, 0.3],
         }}
-        transition={{ 
+        transition={{
           duration: 8,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
         style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1584824388174-7c69a307f0d6?auto=format&fit=crop&q=80")'
+          backgroundImage:
+            'url("https://images.unsplash.com/photo-1584824388174-7c69a307f0d6?auto=format&fit=crop&q=80")',
         }}
       />
 
@@ -79,16 +92,16 @@ const Auth = () => {
             className="absolute w-0.5 h-10 bg-blue-200/40"
             style={{
               left: `${Math.random() * 100}%`,
-              top: `-40px`
+              top: `-40px`,
             }}
             animate={{
-              y: ['0vh', '100vh']
+              y: ["0vh", "100vh"],
             }}
             transition={{
               duration: 1 + Math.random() * 2,
               repeat: Infinity,
               delay: Math.random() * 2,
-              ease: 'linear'
+              ease: "linear",
             }}
           />
         ))}
@@ -101,20 +114,20 @@ const Auth = () => {
           transition={{ duration: 0.5 }}
           className="bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-2xl w-full max-w-md border border-white/10"
         >
-          <motion.div 
+          <motion.div
             className="text-center mb-8"
             initial={{ y: -20 }}
             animate={{ y: 0 }}
             transition={{ delay: 0.2 }}
           >
             <motion.div
-              animate={{ 
+              animate={{
                 rotate: 360,
                 scale: [1, 1.1, 1],
               }}
-              transition={{ 
+              transition={{
                 rotate: { duration: 4, repeat: Infinity, ease: "linear" },
-                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
               }}
               className="inline-block mb-4 relative"
             >
@@ -123,17 +136,19 @@ const Auth = () => {
                 className="absolute inset-0 bg-blue-400/20 rounded-full blur-xl"
                 animate={{
                   scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5]
+                  opacity: [0.5, 0.8, 0.5],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
             </motion.div>
             <h2 className="text-4xl font-bold text-white mb-2">FloodGuard</h2>
-            <p className="text-blue-200">{isLogin ? 'Welcome back!' : 'Create your account'}</p>
+            <p className="text-blue-200">
+              {isLogin ? "Welcome back!" : "Create your account"}
+            </p>
           </motion.div>
 
           <div className="flex justify-center mb-8">
@@ -141,8 +156,8 @@ const Auth = () => {
               onClick={() => setIsLogin(true)}
               className={`px-6 py-2 rounded-l-full ${
                 isLogin
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-300 hover:text-white'
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-300 hover:text-white"
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -153,8 +168,8 @@ const Auth = () => {
               onClick={() => setIsLogin(false)}
               className={`px-6 py-2 rounded-r-full ${
                 !isLogin
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-300 hover:text-white'
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-300 hover:text-white"
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -173,6 +188,16 @@ const Auth = () => {
               >
                 <AlertCircle className="w-5 h-5" />
                 <span>{error}</span>
+              </motion.div>
+            )}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-4 p-3 rounded-lg bg-green-500/20 text-green-200 flex items-center gap-2"
+              >
+                <span>{success}</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -195,14 +220,26 @@ const Auth = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
+              className="relative"
             >
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-300 hover:text-white"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </motion.div>
             <motion.button
               type="submit"
@@ -231,24 +268,22 @@ const Auth = () => {
               )}
             </motion.button>
           </form>
-
         </motion.div>
 
-           {/* Admin Access Button */}
-      <motion.button
-        onClick={() => {
-    navigate('/home');
-          
-        }}
-        className="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700 transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Home Page (Admin Access)
-      </motion.button>
+        {/* Admin Access Button */}
+        <motion.button
+          onClick={() => {
+            navigate("/home");
+          }}
+          className="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Home Page (Admin Access)
+        </motion.button>
       </div>
     </div>
   );
-}
+};
 
 export default Auth;

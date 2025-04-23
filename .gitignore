@@ -31,3 +31,7 @@ temp2.html
 .env
 .env.*
 .env.local
+
+mail.py
+sendEmail.cjs
+testApiKey.js
