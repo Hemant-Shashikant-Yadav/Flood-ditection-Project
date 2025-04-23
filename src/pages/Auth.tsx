@@ -28,10 +28,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      console.log("Attempting to log in with:", { email, password });
       if (isLogin) {
-        const { token, email } = await api.login(email, password);
+        const { token, email: userEmail } = await api.login(email, password);
+        console.log("Login successful:", { token, userEmail });
         localStorage.setItem("token", token);
-        localStorage.setItem("userEmail", email); // Store user email
+        localStorage.setItem("userEmail", userEmail);
         navigate("/home");
       } else {
         await api.register(email, password);
@@ -39,6 +41,7 @@ const Auth = () => {
         setSuccess("Registration successful! Please login.");
       }
     } catch (err: any) {
+      console.error("Error during login/register:", err);
       setError(err.response?.data?.message || "An error occurred");
     } finally {
       setLoading(false);
