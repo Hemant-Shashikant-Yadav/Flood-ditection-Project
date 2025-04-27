@@ -1,275 +1,117 @@
-import React, { useEffect, useState, useRef } from "react";
-import { motion } from "framer-motion";
-import {
-  MapPin,
-  Guitar as Hospital,
-  FireExtinguisher as FireEngine,
-  Slice as Police,
-  School,
-  Building,
-  Bus,
-  AlertTriangle,
-} from "lucide-react";
-
-// Define types for our emergency locations
-interface EmergencyLocation {
-  id: string;
-  name: string;
-  position: google.maps.LatLngLiteral;
-  type:
-    | "hospital"
-    | "fire"
-    | "police"
-    | "shelter"
-    | "school"
-    | "community"
-    | "government"
-    | "transport";
-  contact?: string;
-  address?: string;
-}
+import React, { useEffect, useRef, useState } from "react";
 
 const EmergencyMap: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [userLocation, setUserLocation] =
-    useState<google.maps.LatLngLiteral | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [activeInfoWindow, setActiveInfoWindow] =
-    useState<google.maps.InfoWindow | null>(null);
-  const [floodOverlay, setFloodOverlay] =
-    useState<google.maps.GroundOverlay | null>(null);
 
-  // Sample emergency locations (in real app, this would come from an API)
-  const emergencyLocations: EmergencyLocation[] = [
-    {
-      id: "1",
-      name: "Central Hospital",
-      position: { lat: 40.7128, lng: -74.006 },
-      type: "hospital",
-      contact: "+1 (555) 123-4567",
-      address: "123 Medical Drive",
-    },
-    // Add more locations as needed
-  ];
-
-  // Initialize map
   useEffect(() => {
-    if (!mapRef.current) return;
-
     const initMap = async () => {
       const { Map } = (await google.maps.importLibrary(
         "maps"
       )) as google.maps.MapsLibrary;
+      const { Place, SearchNearbyRankPreference } =
+        (await google.maps.importLibrary(
+          "places"
+        )) as google.maps.PlacesLibrary;
+      const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+        "marker"
+      )) as google.maps.MarkerLibrary;
+      const { LatLngBounds } = (await google.maps.importLibrary(
+        "core"
+      )) as google.maps.CoreLibrary;
 
-      const mapInstance = new Map(mapRef.current, {
-        center: { lat: 40.7128, lng: -74.006 }, // Default to NYC
-        zoom: 12,
-        styles: mapStyles,
-        mapTypeControl: false,
-        fullscreenControl: true,
-        streetViewControl: false,
+      const center = new google.maps.LatLng(16.8476345, 74.579861);
+
+      const mapInstance = new Map(mapRef.current as HTMLElement, {
+        center: center,
+        zoom: 30,
+        mapId: "DEMO_MAP_ID",
       });
 
       setMap(mapInstance);
 
-      // Get user's location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const pos = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            };
-            setUserLocation(pos);
-            mapInstance.setCenter(pos);
+      const types = ["hospital"];
+      const allPlaces: any[] = [];
+
+      for (const type of types) {
+        const request = {
+          fields: ["displayName", "location", "businessStatus"],
+          locationRestriction: {
+            center: center,
+            radius: 1000,
           },
-          () => {
-            console.error("Error: The Geolocation service failed.");
+          includedPrimaryTypes: [type],
+          maxResultCount: 5,
+          rankPreference: SearchNearbyRankPreference.POPULARITY,
+          language: "en-US",
+          region: "in",
+        };
+
+        //@ts-ignore
+        const { places } = await Place.searchNearby(request);
+
+        if (places.length) {
+          allPlaces.push(...places);
+        }
+      }
+
+      if (allPlaces.length) {
+        const bounds = new LatLngBounds();
+        const resultsContainer = document.getElementById("results");
+
+        if (resultsContainer) {
+          resultsContainer.innerHTML = ""; // Clear previous results
+        }
+
+        allPlaces.forEach((place) => {
+          const markerView = new AdvancedMarkerElement({
+            map: mapInstance,
+            position: place.location,
+            title: place.displayName,
+          });
+
+          bounds.extend(place.location as google.maps.LatLng);
+
+          // Add the place to the results list
+          const placeElement = document.createElement("div");
+          placeElement.className = "place-item";
+          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${place.Eg.location.lat},${place.Eg.location.lng}`;
+          placeElement.innerHTML = `
+            <strong>${place.displayName}</strong><br>
+            ${place.businessStatus || "Status not available"}<br>
+              <a href="${googleMapsLink}" target="_blank" style="color: blue; text-decoration: underline;">Open in Google Maps</a>
+          `;
+          if (resultsContainer) {
+            resultsContainer.appendChild(placeElement);
           }
-        );
+        });
+
+        mapInstance.fitBounds(bounds);
+      } else {
+        console.log("No results");
       }
     };
 
     initMap();
   }, []);
 
-  // Add markers when map is ready
-  useEffect(() => {
-    if (!map) return;
-
-    // Clear existing markers
-    markers.forEach((marker) => marker.setMap(null));
-    const newMarkers: google.maps.Marker[] = [];
-
-    emergencyLocations.forEach((location) => {
-      const marker = new google.maps.Marker({
-        position: location.position,
-        map,
-        title: location.name,
-        icon: getMarkerIcon(location.type),
-      });
-
-      const infoWindow = new google.maps.InfoWindow({
-        content: createInfoWindowContent(location),
-      });
-
-      marker.addListener("click", () => {
-        activeInfoWindow?.close();
-        infoWindow.open(map, marker);
-        setActiveInfoWindow(infoWindow);
-      });
-
-      newMarkers.push(marker);
-    });
-
-    setMarkers(newMarkers);
-
-    // Add user location marker if available
-    if (userLocation) {
-      new google.maps.Marker({
-        position: userLocation,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: "#4285F4",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
-        title: "Your Location",
-      });
-    }
-
-    // Add flood overlay
-    const floodImageBounds = {
-      north: 40.7828,
-      south: 40.6428,
-      east: -73.906,
-      west: -74.106,
-    };
-
-    const overlay = new google.maps.GroundOverlay(
-      "https://example.com/flood-overlay.png", // Replace with actual flood overlay image
-      floodImageBounds,
-      {
-        opacity: 0.5,
-      }
-    );
-
-    overlay.setMap(map);
-    setFloodOverlay(overlay);
-
-    return () => {
-      markers.forEach((marker) => marker.setMap(null));
-      floodOverlay?.setMap(null);
-    };
-  }, [map, userLocation]);
-
-  const getMarkerIcon = (type: EmergencyLocation["type"]) => {
-    const icons = {
-      hospital: { url: createSVGIcon(Hospital, "#ef4444") },
-      fire: { url: createSVGIcon(FireEngine, "#f97316") },
-      police: { url: createSVGIcon(Police, "#3b82f6") },
-      shelter: { url: createSVGIcon(Building, "#22c55e") },
-      school: { url: createSVGIcon(School, "#8b5cf6") },
-      community: { url: createSVGIcon(Building, "#6366f1") },
-      government: { url: createSVGIcon(Building, "#64748b") },
-      transport: { url: createSVGIcon(Bus, "#0ea5e9") },
-    };
-    return icons[type];
-  };
-
-  const createSVGIcon = (Icon: any, color: string) => {
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" width="24" height="24">
-        ${Icon}
-      </svg>
-    `;
-    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-  };
-
-  const createInfoWindowContent = (location: EmergencyLocation) => {
-    return `
-      <div class="p-4 max-w-xs">
-        <h3 class="text-lg font-semibold mb-2">${location.name}</h3>
-        ${
-          location.address
-            ? `<p class="text-gray-600 mb-1">${location.address}</p>`
-            : ""
-        }
-        ${
-          location.contact
-            ? `<p class="text-blue-600">${location.contact}</p>`
-            : ""
-        }
-      </div>
-    `;
-  };
-
   return (
-    <div className="relative w-full h-screen">
-      <div ref={mapRef} className="w-full h-full" />
-
-      {/* Legend */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg max-w-xs"
+    <div style={{ height: "100vh", width: "100%" }}>
+      <div ref={mapRef} id="map" style={{ height: "50%", width: "100%" }}></div>
+      <div
+        id="results"
+        style={{
+          padding: "10px",
+          borderTop: "1px solid #ccc",
+          backgroundColor: "#fff",
+          overflowY: "auto", // Enable vertical scrolling
+          maxHeight: "50%", // Limit the height to make it scrollable
+        }}
       >
-        <h3 className="font-semibold mb-2">Map Legend</h3>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Hospital className="w-5 h-5 text-red-500" />
-            <span>Hospitals</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <FireEngine className="w-5 h-5 text-orange-500" />
-            <span>Fire Stations</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Police className="w-5 h-5 text-blue-500" />
-            <span>Police Stations</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Building className="w-5 h-5 text-green-500" />
-            <span>Emergency Shelters</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Flood Alert */}
-      {userLocation && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 bg-red-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-3"
-        >
-          <AlertTriangle className="w-6 h-6" />
-          <div>
-            <h4 className="font-semibold">High Flood Risk Alert</h4>
-            <p className="text-sm">
-              Please follow evacuation routes to nearest emergency shelter
-            </p>
-          </div>
-        </motion.div>
-      )}
+        {/* Results will be listed here */}
+      </div>
     </div>
   );
 };
-
-// Custom map styles
-const mapStyles = [
-  {
-    featureType: "water",
-    elementType: "geometry",
-  },
-  {
-    featureType: "landscape",
-    elementType: "geometry",
-  },
-  // Add more custom styles as needed
-];
 
 export default EmergencyMap;

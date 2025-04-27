@@ -27,6 +27,7 @@ set
 api
 temp.html
 temp2.html
+temp3.html
 
 .env
 .env.*
@@ -35,3 +36,7 @@ temp2.html
 mail.py
 sendEmail.cjs
 testApiKey.js
+testApiKey.cjs
+
+temp
+temp2
