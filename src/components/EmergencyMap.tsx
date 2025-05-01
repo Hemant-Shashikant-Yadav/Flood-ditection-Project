@@ -5,7 +5,7 @@ const EmergencyMap: React.FC = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
   useEffect(() => {
-    const initMap = async () => {
+    const initMap = async (latitude: number, longitude: number) => {
       const { Map } = (await google.maps.importLibrary(
         "maps"
       )) as google.maps.MapsLibrary;
@@ -20,11 +20,11 @@ const EmergencyMap: React.FC = () => {
         "core"
       )) as google.maps.CoreLibrary;
 
-      const center = new google.maps.LatLng(16.8476345, 74.579861);
+      const center = new google.maps.LatLng(latitude, longitude);
 
       const mapInstance = new Map(mapRef.current as HTMLElement, {
         center: center,
-        zoom: 30,
+        zoom: 15,
         mapId: "DEMO_MAP_ID",
       });
 
@@ -75,11 +75,11 @@ const EmergencyMap: React.FC = () => {
           // Add the place to the results list
           const placeElement = document.createElement("div");
           placeElement.className = "place-item";
-          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${place.Eg.location.lat},${place.Eg.location.lng}`;
+          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`;
           placeElement.innerHTML = `
             <strong>${place.displayName}</strong><br>
             ${place.businessStatus || "Status not available"}<br>
-              <a href="${googleMapsLink}" target="_blank" style="color: blue; text-decoration: underline;">Open in Google Maps</a>
+            <a href="${googleMapsLink}" target="_blank" style="color: blue; text-decoration: underline;">Open in Google Maps</a>
           `;
           if (resultsContainer) {
             resultsContainer.appendChild(placeElement);
@@ -92,7 +92,25 @@ const EmergencyMap: React.FC = () => {
       }
     };
 
-    initMap();
+    // Get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          initMap(latitude, longitude);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          // Fallback to a default location if geolocation fails
+          initMap(16.8476345, 74.579861);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      // Fallback to a default location
+      initMap(16.8476345, 74.579861);
+    }
   }, []);
 
   return (
