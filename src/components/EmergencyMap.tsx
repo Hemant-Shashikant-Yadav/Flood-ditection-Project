@@ -75,7 +75,7 @@ const EmergencyMap: React.FC = () => {
           // Add the place to the results list
           const placeElement = document.createElement("div");
           placeElement.className = "place-item";
-          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${place.location.lat},${place.location.lng}`;
+          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${place.Eg.location.lat},${place.Eg.location.lng}`;
           placeElement.innerHTML = `
             <strong>${place.displayName}</strong><br>
             ${place.businessStatus || "Status not available"}<br>
