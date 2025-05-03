@@ -47,7 +47,7 @@ const Home = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("http://192.168.237.14")
+      fetch("https://server-nu-indol.vercel.app/api/sensor")
         .then((res) => res.json())
         .then((data) => {
           console.log("Water level:", data.value);
