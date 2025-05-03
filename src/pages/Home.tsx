@@ -45,6 +45,23 @@ const Home = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch("http://192.168.237.14")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Water level:", data.value);
+          setFormData((prev) => ({
+            ...prev,
+            waterLevel: data.value.toString(), // Update water level in formData
+          }));
+        })
+        .catch(console.error);
+    }, 3000); // Fetch every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchWeatherData = async (latitude: string, longitude: string) => {
     try {
       const response = await fetch(
