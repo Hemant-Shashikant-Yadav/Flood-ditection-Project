@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 
-const EmergencyMap: React.FC = () => {
+interface EmergencyMapProps {
+  onLocationData: (data: string) => void; // Callback to send location data
+}
+
+const EmergencyMap: React.FC<EmergencyMapProps> = ({ onLocationData }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
@@ -63,6 +67,8 @@ const EmergencyMap: React.FC = () => {
           resultsContainer.innerHTML = ""; // Clear previous results
         }
 
+        const locationDetails: string[] = [];
+
         allPlaces.forEach((place) => {
           const markerView = new AdvancedMarkerElement({
             map: mapInstance,
@@ -84,7 +90,17 @@ const EmergencyMap: React.FC = () => {
           if (resultsContainer) {
             resultsContainer.appendChild(placeElement);
           }
+
+          // Collect location details
+          locationDetails.push(
+            `${place.displayName} (${
+              place.businessStatus || "Status not available"
+            })`
+          );
         });
+
+        // Send location details to the parent component
+        onLocationData(locationDetails.join("\n"));
 
         mapInstance.fitBounds(bounds);
       } else {

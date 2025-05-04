@@ -19,6 +19,7 @@ const Home = () => {
   const [prediction, setPrediction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [locationDetails, setLocationDetails] = useState<string>("");
 
   const OPEN_WEATHER_API_KEY = import.meta.env.VITE_OPEN_WEATHER_API_KEY;
 
@@ -100,11 +101,46 @@ const Home = () => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      setPrediction("High risk of flooding!");
-      setShowMap(true);
+    try {
+      const response = await fetch(
+        "https://flood-flask-backend.onrender.com/predict",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            Latitude: formData.latitude,
+            Longitude: formData.longitude,
+            Rainfall: formData.rainfall,
+            Temperature: formData.temperature,
+            Humidity: formData.humidity,
+            RiverDischarge: formData.riverDischarge,
+            WaterLevel: formData.waterLevel,
+            Elevation: formData.elevation,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.FloodOccurred === 1) {
+          setPrediction("High risk of flooding!");
+        } else {
+          setPrediction("Low risk of flooding.");
+        }
+        setShowMap(true);
+      } else {
+        console.error("Error from backend:", data.error || "Unknown error");
+        setPrediction("Error: Unable to determine flood risk.");
+      }
+    } catch (error) {
+      console.error("Error calling the backend API:", error);
+      setPrediction("Error: Unable to connect to the backend.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const triggerFloodCondition = async () => {
@@ -143,6 +179,9 @@ const Home = () => {
             - Fire Department: 101
             - Ambulance: 102
             - Emergency: 112
+
+            Nearby Locations:
+            ${locationDetails}
 
             Stay safe and follow updates from local authorities.
           `,
@@ -316,7 +355,7 @@ const Home = () => {
             animate={{ opacity: 1 }}
             className="w-full h-[calc(100vh-200px)] rounded-xl overflow-hidden shadow-lg"
           >
-            <EmergencyMap />
+            <EmergencyMap onLocationData={setLocationDetails} />
           </motion.div>
         )}
       </div>
