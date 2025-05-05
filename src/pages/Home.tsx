@@ -103,7 +103,7 @@ const Home = () => {
 
     try {
       const response = await fetch(
-        "https://flood-flask-backend.onrender.com/predict",
+        "https://flood-flask-backend.vercel.app/predict",
         {
           method: "POST",
           headers: {
