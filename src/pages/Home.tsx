@@ -153,7 +153,7 @@ const handleSubmit = (e: React.FormEvent) => {
 
     // Manually check conditions for flooding
     if (
-      rainfall > humidity > 37 ||
+      rainfall > 200|| humidity > 37 ||
       riverDischarge > 30000 ||
       waterLevel > 4 ||
       elevation > 2500
