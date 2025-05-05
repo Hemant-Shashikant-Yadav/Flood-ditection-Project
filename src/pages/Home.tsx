@@ -97,51 +97,81 @@ const Home = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setLoading(true);
 
-    try {
-      const response = await fetch(
-        "https://flood-flask-backend.vercel.app/predict",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            Latitude: formData.latitude,
-            Longitude: formData.longitude,
-            Rainfall: formData.rainfall,
-            Temperature: formData.temperature,
-            Humidity: formData.humidity,
-            RiverDischarge: formData.riverDischarge,
-            WaterLevel: formData.waterLevel,
-            Elevation: formData.elevation,
-          }),
-        }
-      );
+  //   try {
+  //     const response = await fetch(
+  //       "https://flood-flask-backend.vercel.app/predict",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           Latitude: formData.latitude,
+  //           Longitude: formData.longitude,
+  //           Rainfall: formData.rainfall,
+  //           Temperature: formData.temperature,
+  //           Humidity: formData.humidity,
+  //           RiverDischarge: formData.riverDischarge,
+  //           WaterLevel: formData.waterLevel,
+  //           Elevation: formData.elevation,
+  //         }),
+  //       }
+  //     );
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      if (response.ok) {
-        if (data.FloodOccurred === 1) {
-          setPrediction("High risk of flooding!");
-        } else {
-          setPrediction("Low risk of flooding.");
-        }
-        setShowMap(true);
-      } else {
-        console.error("Error from backend:", data.error || "Unknown error");
-        setPrediction("Error: Unable to determine flood risk.");
-      }
-    } catch (error) {
-      console.error("Error calling the backend API:", error);
-      setPrediction("Error: Unable to connect to the backend.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (response.ok) {
+  //       if (data.FloodOccurred === 1) {
+  //         setPrediction("High risk of flooding!");
+  //       } else {
+  //         setPrediction("Low risk of flooding.");
+  //       }
+  //       setShowMap(true);
+  //     } else {
+  //       console.error("Error from backend:", data.error || "Unknown error");
+  //       setPrediction("Error: Unable to determine flood risk.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error calling the backend API:", error);
+  //     setPrediction("Error: Unable to connect to the backend.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const { rainfall, humidity, riverDischarge, waterLevel, elevation } = formData;
+
+    // Manually check conditions for flooding
+    if (
+      rainfall > humidity > 37 ||
+      riverDischarge > 30000 ||
+      waterLevel > 4 ||
+      elevation > 2500
+    ) {
+      setPrediction("High risk of flooding!");
+    } else {
+      setPrediction("Low risk of flooding.");
+    }
+
+    setShowMap(true);
+  } catch (error) {
+    console.error("Error processing the data:", error);
+    setPrediction("Error: Unable to determine flood risk.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const triggerFloodCondition = async () => {
     setPrediction("Emergency: Critical flood conditions detected!");
