@@ -16,7 +16,7 @@ const Home = () => {
     waterLevel: "",
     elevation: "",
   });
-  const [prediction, setPrediction] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [locationDetails, setLocationDetails] = useState<string>("");
@@ -158,9 +158,9 @@ const handleSubmit = (e: React.FormEvent) => {
       waterLevel > 4 ||
       elevation > 2500
     ) {
-      setPrediction("High risk of flooding!");
+      setPrediction(true);
     } else {
-      setPrediction("Low risk of flooding.");
+      setPrediction(false);
     }
 
     setShowMap(true);
